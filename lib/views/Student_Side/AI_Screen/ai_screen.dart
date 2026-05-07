@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:technation_hub/controllers/ai_controller.dart';
 import '../../../res/Colors/colors.dart';
 
-class OpenClawScreen extends StatelessWidget {
+class OpenClawScreen extends StatefulWidget {
   const OpenClawScreen({super.key});
+
+  @override
+  State<OpenClawScreen> createState() => _OpenClawScreenState();
+}
+
+class _OpenClawScreenState extends State<OpenClawScreen> {
+  final controller = Get.put(AIController());
 
   @override
   Widget build(BuildContext context) {
@@ -33,26 +42,22 @@ class OpenClawScreen extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          const Icon(Icons.more_vert, color: Colors.white),
-          const SizedBox(width: 16),
-        ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
+            child: Obx(() => ListView.builder(
+              controller: controller.scrollController,
               padding: const EdgeInsets.all(16),
-              children: [
-                _buildAIMessage("Hey! I'm OpenClaw 🤖 I'm connected to your community. How can I help you today?"),
-                _buildUserMessage("Summarize today's Python channel discussions"),
-                _buildAIMessage("Here's what's trending in #Python today 📋"),
-                _buildTrendingCard(),
-                _buildUserMessage("Quiz me on Python basics"),
-                _buildAIMessage("Here's your first question! 🧠"),
-                _buildQuizCard(),
-              ],
-            ),
+              itemCount: controller.messages.length + (controller.isTyping.value ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == controller.messages.length) {
+                  return _buildAIMessage("OpenClaw is thinking...");
+                }
+                final msg = controller.messages[index];
+                return msg.isAI ? _buildAIMessage(msg.text) : _buildUserMessage(msg.text);
+              },
+            )),
           ),
           
           // Suggestions
@@ -63,9 +68,18 @@ class OpenClawScreen extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildSuggestion('Summarize today\'s'),
-                _buildSuggestion('Quiz me'),
-                _buildSuggestion('Explain BLoC'),
+                _buildSuggestion('Summarize today\'s', onTap: () {
+                  controller.messageController.text = 'Summarize today\'s discussions';
+                  controller.sendMessage();
+                }),
+                _buildSuggestion('Quiz me', onTap: () {
+                  controller.messageController.text = 'Quiz me on Python';
+                  controller.sendMessage();
+                }),
+                _buildSuggestion('Explain BLoC', onTap: () {
+                  controller.messageController.text = 'Explain BLoC pattern';
+                  controller.sendMessage();
+                }),
               ],
             ),
           ),
@@ -88,8 +102,10 @@ class OpenClawScreen extends StatelessWidget {
                       color: AppColor.backgroundLight,
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: const TextField(
-                      decoration: InputDecoration(
+                    child: TextField(
+                      controller: controller.messageController,
+                      onSubmitted: (_) => controller.sendMessage(),
+                      decoration: const InputDecoration(
                         hintText: 'Ask OpenClaw anything...',
                         border: InputBorder.none,
                       ),
@@ -97,10 +113,13 @@ class OpenClawScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(color: AppColor.primaryColor, shape: BoxShape.circle),
-                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                GestureDetector(
+                  onTap: controller.sendMessage,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(color: AppColor.primaryColor, shape: BoxShape.circle),
+                    child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  ),
                 ),
               ],
             ),
@@ -283,17 +302,20 @@ class OpenClawScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSuggestion(String text) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColor.lightGreyColor),
-      ),
-      child: Center(
-        child: Text(text, style: const TextStyle(color: AppColor.primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
+  Widget _buildSuggestion(String text, {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColor.lightGreyColor),
+        ),
+        child: Center(
+          child: Text(text, style: const TextStyle(color: AppColor.primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
+        ),
       ),
     );
   }

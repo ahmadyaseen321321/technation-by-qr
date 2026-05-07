@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:get/get.dart';
+import 'package:technation_hub/User_Prefrences/User_Prefrecnes.dart';
+import 'package:technation_hub/res/routes/routes_names.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../app_exceptions.dart';
@@ -10,14 +13,17 @@ class NetworkApiServices extends BaseApiServices {
   dynamic responseJson;
 
 
-  Future<dynamic> getapi(String url) async {
+  Future<dynamic> getapi(String url, {Map<String, String>? headers}) async {
     if(kDebugMode){
       log("url: $url");
-
+      log("headers: $headers");
     }
 
     try {
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
       responseJson = returnresponse(response);
     } on SocketException {
       throw InternetException();
@@ -30,7 +36,7 @@ class NetworkApiServices extends BaseApiServices {
     return responseJson;
   }
 
-  Future<dynamic> postapi(var data, String url) async {
+  Future<dynamic> postapi(var data, String url, {Map<String, String>? headers}) async {
 
     if(kDebugMode){
       log("url: $url");
@@ -40,9 +46,9 @@ class NetworkApiServices extends BaseApiServices {
     try {
       final response = await http.post(Uri.parse(url),
           body: jsonEncode(data),
-        headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        "Accept": "application/json",
+        headers: headers ?? {
+          "Content-Type": "application/json; charset=UTF-8",
+          "Accept": "application/json",
         },
       ).timeout(const Duration(seconds: 10));
       responseJson = returnresponse(response);
@@ -69,6 +75,8 @@ class NetworkApiServices extends BaseApiServices {
       case 400:
         throw BadRequestException(response.body.toString());
       case 401:
+        UserPreferences().removeUser();
+        Get.offAllNamed(RouteName.loginScreen);
         throw UnauthorizedException(response.body.toString());
       case 404:
         throw InvalidUrlException(response.body.toString());

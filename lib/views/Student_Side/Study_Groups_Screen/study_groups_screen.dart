@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:technation_hub/controllers/study_group_controller.dart';
+import 'package:technation_hub/data/response/status.dart';
 import '../../../res/Colors/colors.dart';
 
-class StudyGroupsScreen extends StatelessWidget {
+class StudyGroupsScreen extends StatefulWidget {
   const StudyGroupsScreen({super.key});
+
+  @override
+  State<StudyGroupsScreen> createState() => _StudyGroupsScreenState();
+}
+
+class _StudyGroupsScreenState extends State<StudyGroupsScreen> {
+  final controller = Get.put(StudyGroupController());
 
   @override
   Widget build(BuildContext context) {
@@ -17,108 +27,103 @@ class StudyGroupsScreen extends StatelessWidget {
           style: TextStyle(color: AppColor.blackColor, fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: () => controller.fetchStudyGroups(),
+            icon: const Icon(Icons.refresh, color: AppColor.blackColor),
+          ),
           const Icon(Icons.search, color: AppColor.blackColor),
           const SizedBox(width: 16),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Toggle
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppColor.lightGreyColor.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(26),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Text('My Groups', style: TextStyle(color: AppColor.primaryColor, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: const Center(
-                          child: Text('Discover', style: TextStyle(color: AppColor.greyColor)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            // My Groups
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+      body: Obx(() {
+        switch (controller.rxGroups.value.status) {
+          case Status.LOADING:
+            return const Center(child: CircularProgressIndicator());
+          case Status.ERROR:
+            return Center(child: Text(controller.rxGroups.value.message.toString()));
+          case Status.COMPLETED:
+            final groups = controller.rxGroups.value.data!;
+            return SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildMyGroupCard(
-                    title: 'Python Fundamentals',
-                    subtitle: 'Weekly practice and problem solving',
-                    members: '8/20 members',
-                    day: 'Every Monday',
-                    time: '7:00 PM',
-                    badge: 'Next session in 2 days',
-                    badgeColor: Colors.blue.withOpacity(0.1),
-                    icon: Icons.code,
+                  // Toggle
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColor.lightGreyColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(26),
+                                boxShadow: [
+                                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+                                ],
+                              ),
+                              child: const Center(
+                                child: Text('My Groups', style: TextStyle(color: AppColor.primaryColor, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: const Center(
+                                child: Text('Discover', style: TextStyle(color: AppColor.greyColor)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  _buildMyGroupCard(
-                    title: 'CCNA Prep Group',
-                    subtitle: 'Routing, Switching & Network security',
-                    members: '12/20 members',
-                    day: 'Every Wednesday',
-                    time: '6:00 PM',
-                    badge: 'Next session tomorrow',
-                    badgeColor: Colors.orange.withOpacity(0.1),
-                    icon: Icons.language,
+                  
+                  // My Groups (Placeholder for now)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Center(child: Text('No groups joined yet', style: TextStyle(color: AppColor.greyColor))),
                   ),
+                  
+                  // Discover more
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Discover more groups',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: groups.map((g) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildDiscoverGroupCard(
+                          title: g.name ?? '',
+                          subtitle: g.description ?? '',
+                          members: '${g.maxMembers} max',
+                          day: g.topic ?? 'General',
+                          icon: Icons.group_work_outlined,
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
-            ),
-            
-            // Discover more
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Discover more groups',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildDiscoverGroupCard(
-                title: 'AWS Certified Solutions',
-                subtitle: 'Exam prep for Associate level',
-                members: '45/100 members',
-                day: 'Thursdays',
-                isNew: true,
-                icon: Icons.cloud_queue,
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+            );
+        }
+      }),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         backgroundColor: AppColor.primaryColor,

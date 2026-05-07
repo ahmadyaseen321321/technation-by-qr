@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:technation_hub/Models/channel_model.dart';
+import 'package:technation_hub/Models/post_model.dart';
+import 'package:technation_hub/controllers/home_controller.dart';
+import 'package:technation_hub/data/response/status.dart';
 import '../../../res/Colors/colors.dart';
 import '../../../res/components/side_drawer.dart';
 import 'python_channel_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final controller = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
@@ -26,74 +37,79 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
-          const Icon(Icons.search, color: Colors.white),
-          const SizedBox(width: 8),
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
+          IconButton(
+            onPressed: () => controller.fetchHomeData(),
+            icon: const Icon(Icons.refresh, color: Colors.white),
           ),
+          const Icon(Icons.search, color: Colors.white),
           const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
-          // Categories
-          Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildCategory('All', isActive: true, onTap: () {}),
-                _buildCategory('Python', onTap: () => Get.to(() => const PythonChannelScreen())),
-                _buildCategory('Networking', onTap: () {}),
-                _buildCategory('Cybersecurity', onTap: () {}),
-                _buildCategory('Cloud Arch', onTap: () {}),
-              ],
-            ),
-          ),
+          // Categories (Channels)
+          Obx(() {
+            switch (controller.rxChannelList.value.status) {
+              case Status.LOADING:
+                return const SizedBox(height: 60, child: Center(child: CircularProgressIndicator()));
+              case Status.ERROR:
+                return SizedBox(height: 60, child: Center(child: Text(controller.rxChannelList.value.message.toString())));
+              case Status.COMPLETED:
+                return Container(
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: (controller.rxChannelList.value.data?.length ?? 0) + 1,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _buildCategory('All', isActive: true, onTap: () {});
+                      }
+                      final channel = controller.rxChannelList.value.data![index - 1];
+                      return _buildCategory(channel.name ?? '', onTap: () {
+                        if (channel.name == 'Python') {
+                          Get.to(() => const PythonChannelScreen());
+                        }
+                      });
+                    },
+                  ),
+                );
+            }
+          }),
           
-          // Feed
+          // Feed (Posts)
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              children: [
-                _buildPostCard(
-                  userName: 'Alex Rivera',
-                  userHandle: '@arivera_dev',
-                  role: 'CLOUD ARCH',
-                  time: '2h ago',
-                  content: 'Just implemented a new CI/CD pipeline using GitHub Actions and Terraform. The speed improvement for our staging deployments is nearly 40%. Check out this logic snippet:',
-                  hasCode: true,
-                  codeContent: 'jobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - name: Terraform Init\n        run: terraform init',
-                  likes: '124',
-                  comments: '18',
-                ),
-                _buildPostCard(
-                  userName: 'Jordan Smith',
-                  userHandle: '@js_secure',
-                  role: 'CYBERSEC',
-                  time: '5h ago',
-                  content: 'Finally completed the advanced network penetration testing labs. The complexity of modern zero-trust environments is fascinating. Secure your perimeters!',
-                  hasImage: true,
-                  imageCount: 2,
-                  likes: '89',
-                  comments: '4',
-                ),
-                _buildPostCard(
-                  userName: 'Sarah Chen',
-                  userHandle: '@schen_ai',
-                  role: 'AI/ML',
-                  time: '8h ago',
-                  content: 'Experimenting with the latest OpenClaw LLM release. The reasoning capabilities for debugging React hooks are surprisingly nuanced. Has anyone else tried the zero-shot prompting on legacy codebases?',
-                  likes: '256',
-                  comments: '42',
-                ),
-              ],
-            ),
+            child: Obx(() {
+              switch (controller.rxPostList.value.status) {
+                case Status.LOADING:
+                  return const Center(child: CircularProgressIndicator());
+                case Status.ERROR:
+                  return Center(child: Text(controller.rxPostList.value.message.toString()));
+                case Status.COMPLETED:
+                  return RefreshIndicator(
+                    onRefresh: () async => controller.fetchFeed(),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: controller.rxPostList.value.data?.length ?? 0,
+                      itemBuilder: (context, index) {
+                        final post = controller.rxPostList.value.data![index];
+                        return _buildPostCard(
+                          userName: post.fullName ?? 'Unknown',
+                          userHandle: '@${post.username}',
+                          role: post.userRole ?? 'MEMBER',
+                          time: 'Just now',
+                          content: post.body ?? '',
+                          hasCode: post.hasCode ?? false,
+                          codeContent: post.hasCode == true ? 'Source code available in thread...' : null,
+                          likes: (post.reactionCounts?.length ?? 0).toString(),
+                          comments: '0',
+                        );
+                      },
+                    ),
+                  );
+              }
+            }),
           ),
         ],
       ),

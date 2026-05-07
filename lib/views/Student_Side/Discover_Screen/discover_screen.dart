@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:technation_hub/controllers/discover_controller.dart';
+import 'package:technation_hub/data/response/status.dart';
 import '../../../res/Colors/colors.dart';
 
-class DiscoverScreen extends StatelessWidget {
+class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
+
+  @override
+  State<DiscoverScreen> createState() => _DiscoverScreenState();
+}
+
+class _DiscoverScreenState extends State<DiscoverScreen> {
+  final controller = Get.put(DiscoverController());
 
   @override
   Widget build(BuildContext context) {
@@ -17,110 +27,133 @@ class DiscoverScreen extends StatelessWidget {
           style: TextStyle(color: AppColor.blackColor, fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: () => controller.fetchDiscoverData(),
+            icon: const Icon(Icons.refresh, color: AppColor.blackColor),
+          ),
           const Icon(Icons.search, color: AppColor.blackColor),
           const SizedBox(width: 16),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search channels, members, jobs...',
-                  prefixIcon: const Icon(Icons.search, color: AppColor.greyColor),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColor.lightGreyColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColor.lightGreyColor),
-                  ),
-                ),
-              ),
-            ),
-            
-            // Tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _buildTab('All', isActive: true),
-                  _buildTab('Channels'),
-                  _buildTab('Members'),
-                  _buildTab('Jobs'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Trending Channels
-            _buildSectionHeader('Trending Channels 🔥'),
-            Container(
-              height: 160,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildChannelCard('Python', '1,243 members', Icons.code_rounded),
-                  _buildChannelCard('Networking', '876 members', Icons.language),
-                  _buildChannelCard('Cybersecurity', '654 members', Icons.security),
-                ],
-              ),
-            ),
-            
-            // New Members
-            _buildSectionHeader('New Members 👋'),
-            Container(
-              height: 120,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildMemberItem('Ali Hassan', 'PYTHON'),
-                  _buildMemberItem('Sara Ahmed', 'WEB DEV'),
-                  _buildMemberItem('John Doe', 'CLOUD'),
-                  _buildMemberItem('Elena K.', 'AI/ML'),
-                  _buildMemberItem('Michael R.', 'CYBER'),
-                ],
-              ),
-            ),
-            
-            // Study Groups
-            _buildSectionHeader('Study Groups 📚'),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+      body: Obx(() {
+        switch (controller.rxDiscoverData.value.status) {
+          case Status.LOADING:
+            return const Center(child: CircularProgressIndicator());
+          case Status.ERROR:
+            return Center(child: Text(controller.rxDiscoverData.value.message.toString()));
+          case Status.COMPLETED:
+            final data = controller.rxDiscoverData.value.data!;
+            return SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildStudyGroupCard('Python Fundamentals', '8/20', 'Mon 7PM'),
-                  _buildStudyGroupCard('CCNA Prep Group', '12/20', 'Wed 6PM'),
+                  // Search Bar
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search channels, members, jobs...',
+                        prefixIcon: const Icon(Icons.search, color: AppColor.greyColor),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: AppColor.lightGreyColor),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: AppColor.lightGreyColor),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Tabs
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        _buildTab('All', isActive: true),
+                        _buildTab('Channels'),
+                        _buildTab('Members'),
+                        _buildTab('Jobs'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Trending Channels
+                  _buildSectionHeader('Trending Channels 🔥'),
+                  Container(
+                    height: 180,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: data.channels?.length ?? 0,
+                      itemBuilder: (context, index) {
+                        final channel = data.channels![index];
+                        return _buildChannelCard(
+                          channel.name ?? '', 
+                          '${channel.description?.substring(0, 20)}...', 
+                          Icons.code_rounded
+                        );
+                      },
+                    ),
+                  ),
+                  
+                  // New Members
+                  _buildSectionHeader('New Members 👋'),
+                  Container(
+                    height: 150,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: data.members?.length ?? 0,
+                      itemBuilder: (context, index) {
+                        final member = data.members![index];
+                        return _buildMemberItem(member.fullName ?? 'User', member.role?.toUpperCase() ?? 'MEMBER');
+                      },
+                    ),
+                  ),
+                  
+                  // Study Groups
+                  if (data.groups != null && data.groups!.isNotEmpty) ...[
+                    _buildSectionHeader('Study Groups 📚'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: data.groups!.map((g) => _buildStudyGroupCard(
+                          g['name'], 
+                          '${g['max_members']} max', 
+                          g['topic'] ?? 'General'
+                        )).toList(),
+                      ),
+                    ),
+                  ],
+                  
+                  // Latest Jobs
+                  if (data.jobs != null && data.jobs!.isNotEmpty) ...[
+                    _buildSectionHeader('Latest Jobs 💼', showViewAll: true),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: data.jobs!.map((j) => _buildJobCard(
+                          j['title'], 
+                          '${j['company']} • ${j['location']}', 
+                          j['type'].toString().toUpperCase(), 
+                          List<String>.from(j['skills_required'] ?? [])
+                        )).toList(),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
                 ],
               ),
-            ),
-            
-            // Latest Jobs
-            _buildSectionHeader('Latest Jobs 💼', showViewAll: true),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  _buildJobCard('Junior Flutter Developer', 'TechCorp • Lahore', 'REMOTE', ['Flutter', 'Dart']),
-                  _buildJobCard('Senior Backend Engineer', 'InnovateSoft • Karachi', 'HYBRID', ['Node.js', 'AWS', 'SQL']),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+            );
+        }
+      }),
     );
   }
 
@@ -182,8 +215,18 @@ class DiscoverScreen extends StatelessWidget {
         children: [
           Icon(icon, color: AppColor.primaryColor, size: 30),
           const Spacer(),
-          Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(members, style: TextStyle(color: AppColor.greyColor, fontSize: 11)),
+          Text(
+            name, 
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            members, 
+            style: TextStyle(color: AppColor.greyColor, fontSize: 11),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -207,7 +250,12 @@ class DiscoverScreen extends StatelessWidget {
             backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=$name'),
           ),
           const SizedBox(height: 8),
-          Text(name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+          Text(
+            name, 
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(

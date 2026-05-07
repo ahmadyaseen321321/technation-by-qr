@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:technation_hub/controllers/profile_controller.dart';
+import 'package:technation_hub/data/response/status.dart';
+import 'package:technation_hub/res/routes/routes_names.dart';
 import '../../../res/Colors/colors.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final controller = Get.put(ProfileController());
 
   @override
   Widget build(BuildContext context) {
@@ -11,140 +22,146 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColor.backgroundDark,
         elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.white),
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+        ),
         title: const Text('TechNation Hub', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            onPressed: () => controller.fetchProfile(),
+            icon: const Icon(Icons.refresh, color: Colors.white),
+          ),
           const Icon(Icons.search, color: Colors.white),
-          const SizedBox(width: 8),
-          const Icon(Icons.more_vert, color: Colors.white),
           const SizedBox(width: 16),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Header
-            Container(
-              padding: const EdgeInsets.all(24),
-              color: Colors.white,
+      body: Obx(() {
+        switch (controller.rxUser.value.status) {
+          case Status.LOADING:
+            return const Center(child: CircularProgressIndicator());
+          case Status.ERROR:
+            return Center(child: Text(controller.rxUser.value.message.toString()));
+          case Status.COMPLETED:
+            final user = controller.rxUser.value.data!;
+            return SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Stack(
-                        children: [
-                          const CircleAvatar(
-                            radius: 50,
-                            backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=ahmad'),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(color: AppColor.primaryColor, shape: BoxShape.circle),
-                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                  // Profile Header
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundImage: NetworkImage(user.avatarUrl ?? 'https://i.pravatar.cc/150?u=${user.username}'),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(color: AppColor.primaryColor, shape: BoxShape.circle),
+                                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: const BorderSide(color: AppColor.primaryColor),
+                            const Spacer(),
+                            OutlinedButton(
+                              onPressed: () {},
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                side: const BorderSide(color: AppColor.primaryColor),
+                              ),
+                              child: const Text('Edit Profile', style: TextStyle(color: AppColor.primaryColor, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
                         ),
-                        child: const Text('Edit Profile', style: TextStyle(color: AppColor.primaryColor, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          user.fullName ?? 'User',
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColor.blackColor),
+                        ),
+                        Text(
+                          '@${user.username ?? 'username'}',
+                          style: const TextStyle(color: AppColor.primaryColor, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          user.bio ?? 'Welcome to TechNation Hub! No bio added yet.',
+                          style: TextStyle(color: AppColor.greyColor, height: 1.4),
+                        ),
+                        const SizedBox(height: 16),
+                        if (user.skills != null)
+                          Wrap(
+                            spacing: 8,
+                            children: user.skills!.map((skill) => _buildSkillTag(skill)).toList(),
+                          ),
+                        const SizedBox(height: 24),
+                        
+                        // Stats Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatItem('0', 'POSTS'),
+                            _buildDivider(),
+                            _buildStatItem('0', 'REPLIES'),
+                            _buildDivider(),
+                            _buildStatItem('0', 'FOLLOWING'),
+                            _buildDivider(),
+                            _buildStatItem('0', 'FOLLOWERS'),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Ahmad Raza',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColor.blackColor),
-                  ),
-                  const Text(
-                    '@ahmadraza',
-                    style: TextStyle(color: AppColor.primaryColor, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Flutter developer & AI enthusiast. Learning every day 🚀 Open to opportunities.',
-                    style: TextStyle(color: AppColor.greyColor, height: 1.4),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      _buildSkillTag('Python'),
-                      _buildSkillTag('Flutter'),
-                      _buildSkillTag('Networking'),
-                      _buildSkillTag('Web Dev'),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
                   
-                  // Stats Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatItem('47', 'POSTS'),
-                      _buildDivider(),
-                      _buildStatItem('134', 'REPLIES'),
-                      _buildDivider(),
-                      _buildStatItem('23', 'FOLLOWING'),
-                      _buildDivider(),
-                      _buildStatItem('89', 'FOLLOWERS'),
-                    ],
+                  // OpenClaw Action
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () => Get.toNamed(RouteName.aiScreen),
+                      icon: const Icon(Icons.smart_toy_outlined, color: AppColor.primaryColor),
+                      label: const Text('Ask OpenClaw about this member', style: TextStyle(color: AppColor.primaryColor)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.primaryColor.withOpacity(0.1),
+                        elevation: 0,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                  
+                  // Tabs
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        _buildProfileTab('Posts', isActive: true),
+                        _buildProfileTab('Projects'),
+                        _buildProfileTab('Achievements'),
+                      ],
+                    ),
+                  ),
+                  
+                  // Posts List (Placeholder)
+                  const Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: Center(child: Text('No posts yet', style: TextStyle(color: AppColor.greyColor))),
                   ),
                 ],
               ),
-            ),
-            
-            // OpenClaw Action
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.smart_toy_outlined, color: AppColor.primaryColor),
-                label: const Text('Ask OpenClaw about this member', style: TextStyle(color: AppColor.primaryColor)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primaryColor.withOpacity(0.1),
-                  elevation: 0,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-              ),
-            ),
-            
-            // Tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _buildProfileTab('Posts', isActive: true),
-                  _buildProfileTab('Projects'),
-                  _buildProfileTab('Achievements'),
-                ],
-              ),
-            ),
-            
-            // Posts List
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: 2,
-              itemBuilder: (context, index) {
-                return _buildUserPost(index);
-              },
-            ),
-          ],
-        ),
-      ),
+            );
+        }
+      }),
     );
   }
 
