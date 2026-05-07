@@ -63,15 +63,20 @@ class NetworkApiServices extends BaseApiServices {
   dynamic returnresponse(http.Response response) {
     switch (response.statusCode) {
       case 200:
+      case 201:
         dynamic responseJson = jsonDecode(response.body);
         return responseJson;
       case 400:
         throw BadRequestException(response.body.toString());
-
+      case 401:
+        throw UnauthorizedException(response.body.toString());
+      case 404:
+        throw InvalidUrlException(response.body.toString());
+      case 500:
+        throw ServerException(response.body.toString());
       default:
         throw FetchDataException(
-            "Error occured while communicating with server with status code ${response
-                .statusCode}");
+            "Error occured while communicating with server with status code ${response.statusCode}");
     }
   }
 }

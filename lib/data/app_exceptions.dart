@@ -37,4 +37,12 @@ class FetchDataException extends AppExceptions{
   FetchDataException([String? message]) : super(message, "");
 }
 
+class UnauthorizedException extends AppExceptions{
+  UnauthorizedException([String? message]) : super(message, "");
+}
+
+class InvalidUrlException extends AppExceptions{
+  InvalidUrlException([String? message]) : super(message, "");
+}
+
 

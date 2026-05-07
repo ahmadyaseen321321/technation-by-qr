@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../res/Colors/colors.dart';
 import '../../../res/assets/image_assets.dart';
 import '../../../res/routes/routes_names.dart';
+import '../../../services/splash_services.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,13 +13,12 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final SplashServices _splashServices = SplashServices();
+
   @override
   void initState() {
     super.initState();
-    // Navigate to onboarding after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      Get.offAllNamed(RouteName.onboardingScreen);
-    });
+    _splashServices.isLogin();
   }
 
   @override

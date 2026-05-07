@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../controllers/registration_controller.dart';
 import '../../../res/Colors/colors.dart';
 import '../../../res/routes/routes_names.dart';
 
@@ -11,6 +12,8 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
+  final controller = Get.put(RegistrationController());
+
   final List<String> _interests = [
     'Python', 'Web Dev', 'Networking', 'Cybersecurity', 'DevOps', 'Databases', 'Mobile Dev', 'AI/ML'
   ];
@@ -50,13 +53,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             const SizedBox(height: 32),
             
             // Fields
-            _buildTextField(Icons.person_outline, 'Full Name'),
+            _buildTextField(Icons.person_outline, 'Full Name', onChanged: (v) => controller.fullNameController.value = v),
             const SizedBox(height: 16),
-            _buildTextField(Icons.email_outlined, 'Email Address'),
+            _buildTextField(Icons.email_outlined, 'Email Address', onChanged: (v) => controller.emailController.value = v),
             const SizedBox(height: 16),
-            _buildTextField(Icons.alternate_email, '@handle'),
+            _buildTextField(Icons.alternate_email, '@handle', onChanged: (v) => controller.usernameController.value = v),
             const SizedBox(height: 16),
-            _buildTextField(Icons.lock_outline, 'Password', isPassword: true),
+            Obx(() => _buildTextField(
+              Icons.lock_outline, 
+              'Password', 
+              isPassword: true, 
+              obscureText: controller.obscurePassword.value,
+              onChanged: (v) => controller.passwordController.value = v,
+              onSuffixIconPressed: controller.togglePasswordVisibility,
+            )),
             const SizedBox(height: 32),
             
             // Interests
@@ -99,15 +109,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             const SizedBox(height: 40),
             
             // Join Button
-            ElevatedButton(
-              onPressed: () => Get.offAllNamed(RouteName.homeScreen),
+            Obx(() => ElevatedButton(
+              onPressed: controller.isLoading.value ? null : controller.register,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.primaryColor,
                 minimumSize: const Size(double.infinity, 56),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('Join Free >', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
+              child: controller.isLoading.value 
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text('Join Free >', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            )),
             const SizedBox(height: 32),
             
             // Social Logins
@@ -207,7 +219,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  Widget _buildTextField(IconData icon, String hint, {bool isPassword = false}) {
+  Widget _buildTextField(IconData icon, String hint, {bool isPassword = false, bool obscureText = false, Function(String)? onChanged, VoidCallback? onSuffixIconPressed}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -215,11 +227,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         border: Border.all(color: AppColor.lightGreyColor),
       ),
       child: TextField(
-        obscureText: isPassword,
+        onChanged: onChanged,
+        obscureText: isPassword ? obscureText : false,
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: Icon(icon, color: AppColor.greyColor),
-          suffixIcon: isPassword ? const Icon(Icons.visibility_outlined, color: AppColor.greyColor) : null,
+          suffixIcon: isPassword ? IconButton(
+            icon: Icon(
+              obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, 
+              color: AppColor.greyColor
+            ),
+            onPressed: onSuffixIconPressed,
+          ) : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
         ),
