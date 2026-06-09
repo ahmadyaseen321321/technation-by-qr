@@ -8,8 +8,14 @@ class AppExceptions implements Exception{
   AppExceptions([this._message, this._prefix]);
 
   @override
-  String toString(){
-    return "$_prefix$_message";
+  String toString() {
+    if (_message == null || _message.toString().isEmpty) {
+      return _prefix != null ? _prefix.toString() : "";
+    }
+    if (_prefix == null || _prefix.toString().isEmpty) {
+      return _message.toString();
+    }
+    return "$_prefix: $_message";
   }
 }
 

@@ -49,7 +49,7 @@ class PythonChannelScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColor.primaryColor.withOpacity(0.5),
+                        color: AppColor.primaryColor.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -242,7 +242,7 @@ class PythonChannelScreen extends StatelessWidget {
                 children: chips.map((chip) => Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColor.primaryColor.withOpacity(0.05),
+                    color: AppColor.primaryColor.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(chip, style: const TextStyle(color: AppColor.primaryColor, fontSize: 11, fontWeight: FontWeight.bold)),

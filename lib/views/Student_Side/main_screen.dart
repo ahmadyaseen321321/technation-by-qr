@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:technation_hub/views/Student_Side/Home_Screen/create_post_screen.dart';
 import '../../../res/Colors/colors.dart';
 import 'package:technation_hub/views/Student_Side/Home_Screen/home_screen.dart';
 import 'package:technation_hub/views/Student_Side/Discover_Screen/discover_screen.dart';
@@ -67,7 +69,8 @@ class _MainScreenState extends State<MainScreen> {
       ),
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(
-              onPressed: () {},
+              heroTag: 'main_fab',
+              onPressed: () => Get.to(() => const CreatePostScreen()),
               backgroundColor: AppColor.primaryColor,
               child: const Icon(Icons.add, color: Colors.white, size: 30),
             )

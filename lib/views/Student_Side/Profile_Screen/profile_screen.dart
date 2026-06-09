@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:technation_hub/controllers/profile_controller.dart';
 import 'package:technation_hub/data/response/status.dart';
 import 'package:technation_hub/res/routes/routes_names.dart';
+import 'package:technation_hub/views/Student_Side/Profile_Screen/edit_profile_screen.dart';
 import '../../../res/Colors/colors.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -58,9 +59,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             Stack(
                               children: [
-                                CircleAvatar(
+                                _buildAvatar(
+                                  user.fullName ?? user.username ?? 'User',
+                                  user.avatarUrl,
                                   radius: 50,
-                                  backgroundImage: NetworkImage(user.avatarUrl ?? 'https://i.pravatar.cc/150?u=${user.username}'),
                                 ),
                                 Positioned(
                                   bottom: 0,
@@ -75,7 +77,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const Spacer(),
                             OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () async {
+                                final updated = await Get.to(() => EditProfileScreen(user: user));
+                                if (updated == true) {
+                                  controller.fetchProfile();
+                                }
+                              },
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -176,6 +183,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         text,
         style: const TextStyle(color: AppColor.primaryColor, fontSize: 12, fontWeight: FontWeight.w500),
       ),
+    );
+  }
+
+  Widget _buildAvatar(String name, String? avatarUrl, {required double radius}) {
+    final trimmedUrl = avatarUrl?.trim() ?? '';
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part[0].toUpperCase())
+        .join();
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppColor.primaryColor.withOpacity(0.12),
+      backgroundImage: trimmedUrl.isNotEmpty ? NetworkImage(trimmedUrl) : null,
+      child: trimmedUrl.isEmpty
+          ? Text(
+              initials.isEmpty ? 'U' : initials,
+              style: TextStyle(
+                color: AppColor.primaryColor,
+                fontSize: radius * 0.5,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+          : null,
     );
   }
 
