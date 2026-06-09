@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:technation_hub/controllers/ai_controller.dart';
+import 'package:technation_hub/controllers/profile_controller.dart';
 import 'package:technation_hub/views/Student_Side/Home_Screen/create_post_screen.dart';
 import '../../../res/Colors/colors.dart';
 import 'package:technation_hub/views/Student_Side/Home_Screen/home_screen.dart';
@@ -18,6 +20,19 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Register controllers as permanent singletons so they persist
+    // across tab switches and aren't recreated on every rebuild.
+    if (!Get.isRegistered<AIController>()) {
+      Get.put(AIController(), permanent: true);
+    }
+    if (!Get.isRegistered<ProfileController>()) {
+      Get.put(ProfileController(), permanent: true);
+    }
+  }
 
   final List<Widget> _pages = [
     const HomeScreen(),

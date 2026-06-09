@@ -8,6 +8,7 @@ import 'package:technation_hub/views/Student_Side/Forgot_Password_Screen/forgot_
 import 'package:technation_hub/views/Student_Side/main_screen.dart';
 import 'package:technation_hub/views/Student_Side/Chat_Screen/chat_screen.dart';
 import 'package:technation_hub/views/Student_Side/Notification_Screen/notification_screen.dart';
+import 'package:technation_hub/views/Student_Side/AI_Screen/ai_screen.dart';
 
 class AppRoute {
   static approutes() => [
@@ -50,6 +51,11 @@ class AppRoute {
           name: RouteName.notificationScreen,
           page: () => const NotificationScreen(),
           transition: Transition.downToUp,
+        ),
+        GetPage(
+          name: RouteName.aiScreen,
+          page: () => const OpenClawScreen(),
+          transition: Transition.rightToLeft,
         ),
       ];
 }
